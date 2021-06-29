@@ -23,18 +23,16 @@ __author__ = "Diego Parrilla Santamaria"
 __version__ = "0.0.1"
 
 import datetime
-
 from typing import Set
-from pathlib import Path
-
-from cowrie.core import output
-from cowrie.core.config import CowrieConfig
 
 from treq import post
 
-from twisted.internet import defer, reactor, threads
+from twisted.internet import defer
 from twisted.python import log
 from twisted.web import http
+
+from cowrie.core import output
+from cowrie.core.config import CowrieConfig
 
 # Buffer flush frequency (in minutes)
 BUFFER_FLUSH_FREQUENCY: int = 1
