@@ -1024,3 +1024,9 @@ enabled = false
 # WARNING: A binary file is read from this directory on start-up. Do not
 # change unless you understand the security implications!
 #dump_path = ${honeypot:state_path}/abuseipdb
+
+[output_carbonlayer]
+enabled = false
+bearer_token = CARBONLAYER_API_TOKEN
+#default_ttl = 3600
+#default_category = ABUSERS
