@@ -49,6 +49,12 @@ CARBONLAYER_DEFAULT_TTL: int = 86400
 # Default category to store the ip address.
 CARBONLAYER_DEFAULT_CATEGORY: str = "ABUSE"
 
+# Track the login event
+CARBONLAYER_DEFAULT_TRACK_LOGIN: bool = True
+
+# Track the session event
+CARBONLAYER_DEFAULT_TRACK_SESSION: bool = False
+
 
 class HTTPClient:
     """
@@ -115,11 +121,28 @@ class Output(output.Output):
             "default_category",
             fallback=CARBONLAYER_DEFAULT_CATEGORY,
         )
+        self.track_login = CowrieConfig.getboolean(
+            "output_carbonlayer",
+            "track_login",
+            fallback=CARBONLAYER_DEFAULT_TRACK_LOGIN,
+        )
+        self.track_session = CowrieConfig.getboolean(
+            "output_carbonlayer",
+            "track_session",
+            fallback=CARBONLAYER_DEFAULT_TRACK_SESSION,
+        )
         self.bearer_token = CowrieConfig.get("output_carbonlayer", "bearer_token")
 
         self.last_report: int = -1
         self.report_bucket: int = BUFFER_FLUSH_MAX_SIZE
         self.ip_set: Set[str] = set()
+
+        self.track_events = []
+        if self.track_login:
+            self.track_events.append("cowrie.login")
+
+        if self.track_session:
+            self.track_events.append("cowrie.session")
 
         self.http_client = HTTPClient(self.bearer_token)
         log.msg(
@@ -136,17 +159,9 @@ class Output(output.Output):
         )
 
     def write(self, ev):
-        if ev["eventid"].rsplit(".", 1)[0] in [
-            "cowrie.login",
-            "cowrie.session",
-        ]:
+        if ev["eventid"].rsplit(".", 1)[0] in self.track_events:
             source_ip: str = ev["src_ip"]
             self.ip_set.add(source_ip)
-            #            log.msg(
-            #                eventid="cowrie.carbonlayer.queuedip",
-            #                format="Carbonlayer output plugin enqueued the IP %(ip)s to report.",
-            #                ip=source_ip,
-            #            )
 
             if self.last_report == -1:
                 # Never execute in this cycle. Store timestamp of the first element.
