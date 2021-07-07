@@ -24,6 +24,7 @@ __version__ = "0.0.1"
 
 import datetime
 from typing import Set
+from typing import List
 
 from treq import post
 
@@ -55,6 +56,9 @@ CARBONLAYER_DEFAULT_TRACK_LOGIN: bool = True
 # Track the session event
 CARBONLAYER_DEFAULT_TRACK_SESSION: bool = False
 
+# Default tags to store the ip address.
+CARBONLAYER_DEFAULT_TAGS: str = "COWRIE"
+
 
 class HTTPClient:
     """
@@ -69,8 +73,15 @@ class HTTPClient:
             "bearer": bearer_token,
         }
 
-    def report(self, ip_set: Set[str], category: str = None, ttl: int = 0):
-        payload: dict = {"addresses": list(ip_set), "type": category, "ttl": ttl}
+    def report(
+        self, ip_set: Set[str], category: str = None, ttl: int = 0, tags: List[str] = []
+    ):
+        payload: dict = {
+            "addresses": list(ip_set),
+            "type": category,
+            "ttl": ttl,
+            "tags": tags,
+        }
         self._post(payload)
 
     @defer.inlineCallbacks
@@ -114,11 +125,11 @@ class HTTPClient:
 class Output(output.Output):
     def start(self):
         self.default_ttl = CowrieConfig.getint(
-            "output_carbonlayer", "default_ttl", fallback=CARBONLAYER_DEFAULT_TTL
+            "output_carbonlayer", "ttl", fallback=CARBONLAYER_DEFAULT_TTL
         )
         self.default_category = CowrieConfig.get(
             "output_carbonlayer",
-            "default_category",
+            "category",
             fallback=CARBONLAYER_DEFAULT_CATEGORY,
         )
         self.track_login = CowrieConfig.getboolean(
@@ -132,6 +143,7 @@ class Output(output.Output):
             fallback=CARBONLAYER_DEFAULT_TRACK_SESSION,
         )
         self.bearer_token = CowrieConfig.get("output_carbonlayer", "bearer_token")
+        self.tags = CowrieConfig.get("output_carbonlayer", "tags").split(",")
 
         self.last_report: int = -1
         self.report_bucket: int = BUFFER_FLUSH_MAX_SIZE
@@ -147,9 +159,12 @@ class Output(output.Output):
         self.http_client = HTTPClient(self.bearer_token)
         log.msg(
             eventid="cowrie.carbonlayer.reporterinitialized",
-            format="Carbonlayer output plugin successfully initialized. Category=%(category)s. TTL=%(ttl)s",
+            format="Carbonlayer output plugin successfully initialized.\
+ Category=%(category)s. TTL=%(ttl)s. Session Tracking=%(session_tracking)s. Login Tracking=%(login_tracking)s",
             category=self.default_category,
             ttl=self.default_ttl,
+            session_tracking=self.track_session,
+            login_tracking=self.track_login,
         )
 
     def stop(self):
@@ -177,6 +192,7 @@ class Output(output.Output):
                     ip_set=self.ip_set,
                     category=self.default_category,
                     ttl=self.default_ttl,
+                    tags=self.tags,
                 )
                 self.ip_set = set()
                 self.report_bucket = BUFFER_FLUSH_MAX_SIZE
