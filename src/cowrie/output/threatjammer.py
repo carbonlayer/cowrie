@@ -42,22 +42,22 @@ BUFFER_FLUSH_FREQUENCY: int = 1
 BUFFER_FLUSH_MAX_SIZE: int = 1000
 
 # API URL
-CARBONLAYER_REPORT_URL: str = "http://api.report.threatjammer.com/v1/ip"
+THREATJAMMER_REPORT_URL: str = "http://api.report.threatjammer.com/v1/ip"
 
-# Default Time To Live (TTL) in the CarbonLayer.io private blocklist. In minutes.
-CARBONLAYER_DEFAULT_TTL: int = 86400
+# Default Time To Live (TTL) in the ThreatJammer.com private blocklist. In minutes.
+THREATJAMMER_DEFAULT_TTL: int = 86400
 
 # Default category to store the ip address.
-CARBONLAYER_DEFAULT_CATEGORY: str = "ABUSE"
+THREATJAMMER_DEFAULT_CATEGORY: str = "ABUSE"
 
 # Track the login event
-CARBONLAYER_DEFAULT_TRACK_LOGIN: bool = True
+THREATJAMMER_DEFAULT_TRACK_LOGIN: bool = True
 
 # Track the session event
-CARBONLAYER_DEFAULT_TRACK_SESSION: bool = False
+THREATJAMMER_DEFAULT_TRACK_SESSION: bool = False
 
 # Default tags to store the ip address.
-CARBONLAYER_DEFAULT_TAGS: str = "COWRIE"
+THREATJAMMER_DEFAULT_TAGS: str = "COWRIE"
 
 
 class HTTPClient:
@@ -65,13 +65,14 @@ class HTTPClient:
     HTTP client to report the IP adress set
     """
 
-    def __init__(self, bearer_token: str = None):
+    def __init__(self, api_url: str = None, bearer_token: str = None):
         self.headers = {
-            "User-Agent": "Cowrie Honeypot Carbonlayer.io output plugin",
+            "User-Agent": "Cowrie Honeypot ThreatJammer.com output plugin",
             "Accept": "application/json",
             "Content-Type": "application/json",
             "bearer": bearer_token,
         }
+        self.api_url = api_url
 
     def report(
         self, ip_set: Set[str], category: str = None, ttl: int = 0, tags: List[str] = []
@@ -88,7 +89,7 @@ class HTTPClient:
     def _post(self, payload: dict):
         try:
             response = yield post(
-                url=CARBONLAYER_REPORT_URL,
+                url=self.api_url,
                 headers=self.headers,
                 json=payload,
             )
@@ -96,7 +97,7 @@ class HTTPClient:
         except Exception as e:
             log.msg(
                 eventid="cowrie.threatjammer.reportfail",
-                format="Carbonlayer.io output plugin failed when reporting the payload %(payload)s. "
+                format="ThreatJammer.com output plugin failed when reporting the payload %(payload)s. "
                 "Exception raised: %(exception)s.",
                 payload=str(payload),
                 exception=repr(e),
@@ -107,7 +108,7 @@ class HTTPClient:
             reason = yield response.text()
             log.msg(
                 eventid="cowrie.threatjammer.reportfail",
-                format="Carbonlayer output plugin failed to report the payload %(payload)s. Returned the\
+                format="ThreatJammer.com output plugin failed to report the payload %(payload)s. Returned the\
  HTTP status code %(response)s. Reason: %(reason)s.",
                 payload=str(payload),
                 response=response.code,
@@ -116,7 +117,7 @@ class HTTPClient:
         else:
             log.msg(
                 eventid="cowrie.threatjammer.reportedipset",
-                format="Carbonlayer output plugin successfully reported %(payload)s.",
+                format="ThreatJammer.com output plugin successfully reported %(payload)s.",
                 payload=str(payload),
             )
         return
@@ -124,23 +125,28 @@ class HTTPClient:
 
 class Output(output.Output):
     def start(self):
+        self.api_url = CowrieConfig.get(
+            "output_threatjammer",
+            "api_url",
+            fallback=THREATJAMMER_REPORT_URL,
+        )
         self.default_ttl = CowrieConfig.getint(
-            "output_threatjammer", "ttl", fallback=CARBONLAYER_DEFAULT_TTL
+            "output_threatjammer", "ttl", fallback=THREATJAMMER_DEFAULT_TTL
         )
         self.default_category = CowrieConfig.get(
             "output_threatjammer",
             "category",
-            fallback=CARBONLAYER_DEFAULT_CATEGORY,
+            fallback=THREATJAMMER_DEFAULT_CATEGORY,
         )
         self.track_login = CowrieConfig.getboolean(
             "output_threatjammer",
             "track_login",
-            fallback=CARBONLAYER_DEFAULT_TRACK_LOGIN,
+            fallback=THREATJAMMER_DEFAULT_TRACK_LOGIN,
         )
         self.track_session = CowrieConfig.getboolean(
             "output_threatjammer",
             "track_session",
-            fallback=CARBONLAYER_DEFAULT_TRACK_SESSION,
+            fallback=THREATJAMMER_DEFAULT_TRACK_SESSION,
         )
         self.bearer_token = CowrieConfig.get("output_threatjammer", "bearer_token")
         self.tags = CowrieConfig.get("output_threatjammer", "tags").split(",")
@@ -156,10 +162,10 @@ class Output(output.Output):
         if self.track_session:
             self.track_events.append("cowrie.session")
 
-        self.http_client = HTTPClient(self.bearer_token)
+        self.http_client = HTTPClient(self.api_url, self.bearer_token)
         log.msg(
             eventid="cowrie.threatjammer.reporterinitialized",
-            format="Carbonlayer output plugin successfully initialized.\
+            format="ThreatJammer.com output plugin successfully initialized.\
  Category=%(category)s. TTL=%(ttl)s. Session Tracking=%(session_tracking)s. Login Tracking=%(login_tracking)s",
             category=self.default_category,
             ttl=self.default_ttl,
@@ -170,7 +176,7 @@ class Output(output.Output):
     def stop(self):
         log.msg(
             eventid="cowrie.threatjammer.reporterterminated",
-            format="Carbonlayer output plugin successfully terminated. Bye!",
+            format="ThreatJammer.com output plugin successfully terminated. Bye!",
         )
 
     def write(self, ev):

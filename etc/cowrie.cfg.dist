@@ -1025,9 +1025,10 @@ enabled = false
 # change unless you understand the security implications!
 #dump_path = ${honeypot:state_path}/abuseipdb
 
-[output_carbonlayer]
+[output_threatjammer]
 enabled = false
-bearer_token = CARBONLAYER_API_TOKEN
+bearer_token = THREATJAMMER_API_TOKEN
+#api_url=http://api.report.threatjammer.com/v1/ip
 #track_login = true
 #track_session = true
 #ttl = 86400
