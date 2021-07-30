@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """
-Cowrie plugin for reporting login attempts via the CarbonLayer.io Report API.
+Cowrie plugin for reporting login attempts via the ThreatJammer.com Report API.
 
-"CarbonLayer.io is a tool to track and detect attacks" <https://carbonlayer.io/>
+"ThreatJammer.com is a tool to track and detect attacks" <https://threatjammer.com>
 """
 
 
@@ -42,7 +42,7 @@ BUFFER_FLUSH_FREQUENCY: int = 1
 BUFFER_FLUSH_MAX_SIZE: int = 1000
 
 # API URL
-CARBONLAYER_REPORT_URL: str = "http://report.infra.carbonlayer.io/v1/ip"
+CARBONLAYER_REPORT_URL: str = "http://api.report.threatjammer.com/v1/ip"
 
 # Default Time To Live (TTL) in the CarbonLayer.io private blocklist. In minutes.
 CARBONLAYER_DEFAULT_TTL: int = 86400
@@ -95,7 +95,7 @@ class HTTPClient:
 
         except Exception as e:
             log.msg(
-                eventid="cowrie.carbonlayer.reportfail",
+                eventid="cowrie.threatjammer.reportfail",
                 format="Carbonlayer.io output plugin failed when reporting the payload %(payload)s. "
                 "Exception raised: %(exception)s.",
                 payload=str(payload),
@@ -106,7 +106,7 @@ class HTTPClient:
         if response.code != http.OK:
             reason = yield response.text()
             log.msg(
-                eventid="cowrie.carbonlayer.reportfail",
+                eventid="cowrie.threatjammer.reportfail",
                 format="Carbonlayer output plugin failed to report the payload %(payload)s. Returned the\
  HTTP status code %(response)s. Reason: %(reason)s.",
                 payload=str(payload),
@@ -115,7 +115,7 @@ class HTTPClient:
             )
         else:
             log.msg(
-                eventid="cowrie.carbonlayer.reportedipset",
+                eventid="cowrie.threatjammer.reportedipset",
                 format="Carbonlayer output plugin successfully reported %(payload)s.",
                 payload=str(payload),
             )
@@ -125,25 +125,25 @@ class HTTPClient:
 class Output(output.Output):
     def start(self):
         self.default_ttl = CowrieConfig.getint(
-            "output_carbonlayer", "ttl", fallback=CARBONLAYER_DEFAULT_TTL
+            "output_threatjammer", "ttl", fallback=CARBONLAYER_DEFAULT_TTL
         )
         self.default_category = CowrieConfig.get(
-            "output_carbonlayer",
+            "output_threatjammer",
             "category",
             fallback=CARBONLAYER_DEFAULT_CATEGORY,
         )
         self.track_login = CowrieConfig.getboolean(
-            "output_carbonlayer",
+            "output_threatjammer",
             "track_login",
             fallback=CARBONLAYER_DEFAULT_TRACK_LOGIN,
         )
         self.track_session = CowrieConfig.getboolean(
-            "output_carbonlayer",
+            "output_threatjammer",
             "track_session",
             fallback=CARBONLAYER_DEFAULT_TRACK_SESSION,
         )
-        self.bearer_token = CowrieConfig.get("output_carbonlayer", "bearer_token")
-        self.tags = CowrieConfig.get("output_carbonlayer", "tags").split(",")
+        self.bearer_token = CowrieConfig.get("output_threatjammer", "bearer_token")
+        self.tags = CowrieConfig.get("output_threatjammer", "tags").split(",")
 
         self.last_report: int = -1
         self.report_bucket: int = BUFFER_FLUSH_MAX_SIZE
@@ -158,7 +158,7 @@ class Output(output.Output):
 
         self.http_client = HTTPClient(self.bearer_token)
         log.msg(
-            eventid="cowrie.carbonlayer.reporterinitialized",
+            eventid="cowrie.threatjammer.reporterinitialized",
             format="Carbonlayer output plugin successfully initialized.\
  Category=%(category)s. TTL=%(ttl)s. Session Tracking=%(session_tracking)s. Login Tracking=%(login_tracking)s",
             category=self.default_category,
@@ -169,7 +169,7 @@ class Output(output.Output):
 
     def stop(self):
         log.msg(
-            eventid="cowrie.carbonlayer.reporterterminated",
+            eventid="cowrie.threatjammer.reporterterminated",
             format="Carbonlayer output plugin successfully terminated. Bye!",
         )
 
