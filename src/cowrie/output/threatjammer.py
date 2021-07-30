@@ -104,7 +104,7 @@ class HTTPClient:
             )
             return
 
-        if response.code != http.OK:
+        if response.code != http.ACCEPTED:
             reason = yield response.text()
             log.msg(
                 eventid="cowrie.threatjammer.reportfail",
