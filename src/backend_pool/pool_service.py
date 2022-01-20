@@ -202,7 +202,8 @@ class PoolService:
             used_guests = self.get_guest_states(["used"])
             for guest in used_guests:
                 timed_out = (
-                    guest["freed_timestamp"] + guest_timeout < backend_pool.util.now()
+                    guest["freed_timestamp"] + guest_timeout
+                    < backend_pool.util.utcnow()
                 )
 
                 # only mark guests without clients
@@ -414,7 +415,7 @@ class PoolService:
         try:
             for guest in self.guests:
                 if guest["id"] == guest_id:
-                    guest["freed_timestamp"] = backend_pool.util.now()
+                    guest["freed_timestamp"] = backend_pool.util.utcnow()
                     guest["connected"] -= 1
 
                     if guest["connected"] == 0:

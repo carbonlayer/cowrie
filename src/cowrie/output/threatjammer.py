@@ -42,7 +42,7 @@ BUFFER_FLUSH_FREQUENCY: int = 1
 BUFFER_FLUSH_MAX_SIZE: int = 1000
 
 # API URL
-THREATJAMMER_REPORT_URL: str = "http://api.report.threatjammer.com/v1/ip"
+THREATJAMMER_REPORT_URL: str = "http://paris.report.threatjammer.com/v1/ip"
 
 # Default Time To Live (TTL) in the ThreatJammer.com private blocklist. In minutes.
 THREATJAMMER_DEFAULT_TTL: int = 86400
@@ -70,7 +70,7 @@ class HTTPClient:
             "User-Agent": "Cowrie Honeypot ThreatJammer.com output plugin",
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "bearer": bearer_token,
+            "Authorization": f"Bearer {bearer_token}",
         }
         self.api_url = api_url
 

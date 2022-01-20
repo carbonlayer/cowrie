@@ -112,7 +112,9 @@ class HoneyPotSSHTransport(transport.SSHServerTransport, TimeoutMixin):
             self.otherVersionString = self.buf.split(b"\n")[0].strip()
             log.msg(
                 eventid="cowrie.client.version",
-                version=self.otherVersionString.decode("utf-8", errors="backslashreplace"),
+                version=self.otherVersionString.decode(
+                    "utf-8", errors="backslashreplace"
+                ),
                 format="Remote SSH version: %(version)s",
             )
             m = re.match(br"SSH-(\d+.\d+)-(.*)", self.otherVersionString)

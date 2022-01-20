@@ -161,7 +161,7 @@ class Command_wget(HoneyPotCommand):
                         host, host
                     )
                 )
-            self.errorWrite("wget: unable to resolve host address ‘{}’\n".format(host))
+            self.errorWrite(f"wget: unable to resolve host address ‘{host}’\n")
             return None
         except ValueError:
             pass

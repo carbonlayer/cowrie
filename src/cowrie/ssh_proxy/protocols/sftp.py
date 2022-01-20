@@ -215,7 +215,7 @@ class SFTP(base_protocol.BaseProtocol):
 
                     # if self.out.cfg.getboolean(['download', 'passive']):
                     #     # self.out.make_downloads_folder()
-                    #     outfile = self.out.downloadFolder + datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")\
+                    #     outfile = self.out.downloadFolder + datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f")\
                     #     + "-" + self.path.split('/')[-1]
                     #     f = open(outfile, 'wb')
                     #     f.write(self.theFile)

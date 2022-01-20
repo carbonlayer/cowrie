@@ -2,15 +2,15 @@
 MySQL output connector. Writes audit logs to MySQL database
 """
 
+# For exceptions: https://dev.mysql.com/doc/connector-python/en/connector-python-api-errors-error.html
+import mysql.connector
+
 from twisted.enterprise import adbapi
 from twisted.internet import defer
 from twisted.python import log
 
 import cowrie.core.output
 from cowrie.core.config import CowrieConfig
-
-# For exceptions: https://dev.mysql.com/doc/connector-python/en/connector-python-api-errors-error.html
-import mysql.connector
 
 
 class ReconnectingConnectionPool(adbapi.ConnectionPool):
@@ -90,7 +90,9 @@ class Output(cowrie.core.output.Output):
         """
         if error.value.args[0] in (1146, 1406):
             log.msg(f"output_mysql: MySQL Error: {error.value.args!r}")
-            log.msg("output_mysql: MySQL schema maybe misconfigured, doublecheck database!")
+            log.msg(
+                "output_mysql: MySQL schema maybe misconfigured, doublecheck database!"
+            )
         else:
             log.msg(f"output_mysql: MySQL Error: {error.value.args!r}")
 
@@ -107,7 +109,9 @@ class Output(cowrie.core.output.Output):
     def write(self, entry):
         if entry["eventid"] == "cowrie.session.connect":
             if self.debug:
-                log.msg(f"output_mysql: SELECT `id` FROM `sensors` WHERE `ip` = '{self.sensor}'")
+                log.msg(
+                    f"output_mysql: SELECT `id` FROM `sensors` WHERE `ip` = '{self.sensor}'"
+                )
             r = yield self.db.runQuery(
                 f"SELECT `id` FROM `sensors` WHERE `ip` = '{self.sensor}'"
             )
@@ -116,7 +120,9 @@ class Output(cowrie.core.output.Output):
                 sensorid = r[0][0]
             else:
                 if self.debug:
-                    log.msg(f"output_mysql: INSERT INTO `sensors` (`ip`) VALUES ('{self.sensor}')")
+                    log.msg(
+                        f"output_mysql: INSERT INTO `sensors` (`ip`) VALUES ('{self.sensor}')"
+                    )
                 yield self.db.runQuery(
                     f"INSERT INTO `sensors` (`ip`) VALUES ('{self.sensor}')"
                 )

@@ -55,7 +55,7 @@ class Output(cowrie.core.output.Output):
         ]:
             return
 
-        today = str(datetime.now().date())
+        today = str(datetime.utcnow().date())
 
         if not self.context.get(today):
             self.context = {}

@@ -125,7 +125,10 @@ class Output(cowrie.core.output.Output):
         # Check:
         # If the file was first downloaded more than a "period of time" (e.g 1 min) ago -
         # it has been apparently scanned before in VT and therefore is not going to be checked again
-        if file_modification_time < datetime.datetime.now() - TIME_SINCE_FIRST_DOWNLOAD:
+        if (
+            file_modification_time
+            < datetime.datetime.utcnow() - TIME_SINCE_FIRST_DOWNLOAD
+        ):
             log.msg(f"File with shasum '{shasum}' was downloaded before")
             return False
         return True
